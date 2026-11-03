@@ -2,9 +2,9 @@
 
 ## Para usarla en los teléfonos (03/11/2026)
 
-- [ ] Publicarla: crear el repositorio `hogar` en GitHub (público, sin datos),
-      activar GitHub Pages → martintrigo.github.io/hogar. Instalar en los dos
-      teléfonos ("Agregar a pantalla de inicio").
+- [x] Publicada (03/11): repositorio `MartinTrigo/hogar` (público), GitHub
+      Pages → https://martintrigo.github.io/hogar/ . Cada push publica.
+- [ ] Instalarla en los dos teléfonos ("Agregar a pantalla de inicio").
 - [ ] Conectar la planilla (`apps-script/LEEME.md`).
 
 ## Ideas

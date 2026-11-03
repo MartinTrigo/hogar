@@ -27,6 +27,10 @@ PWA en HTML/CSS/JS puro, sin compilar. Un archivo por pestaña:
 | `js/ajustes.js` | temas, nombres, categorías y presupuesto, respaldo |
 | `apps-script/Code.gs` | el servidor (pasos en `apps-script/LEEME.md`) |
 
+Publicada en <https://martintrigo.github.io/hogar/> (repositorio `MartinTrigo/hogar`,
+**público**: nunca subir la dirección del script, la clave ni datos reales).
+Cada push publica; Martín autorizó subir sin preguntar cada vez.
+
 Vista previa: `hogar` en `AMA\.claude\launch.json` (puerto 8650).
 
 ## Reglas
