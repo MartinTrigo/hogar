@@ -53,12 +53,18 @@ Vista previa: `hogar` en `AMA\.claude\launch.json` (puerto 8650).
 - **Comparar con el mes anterior hasta el mismo día** si el mes está en curso.
 - **Proyección a fin de mes** = fijos + variable ÷ días pasados × días del mes,
   desde el día 5.
-- **Cuentas entre ustedes:** solo gastos del hogar pagados de un bolsillo (no
-  la cuenta común ni lo personal), repartidos según `reparto` (% de Martín).
+- **El fin es controlar el gasto y ahorrar, no ver quién pone más** (Martín,
+  05/11): se sacaron el reparto, las "cuentas entre ustedes" y lo
+  "personal". En su lugar: "Este mes contra un mes normal" (cada categoría
+  contra el promedio de los 3 meses anteriores con gastos, como presupuesto
+  automático) y la meta de ahorro (`metaAhorro`, % de lo que entra).
 - **Fijos:** un gasto marcado "se repite" aparece al mes siguiente como
   aviso para cargarlo con un toque.
 - **Vetas de madera:** ruido SVG (`feTurbulence`) estirado, con anillos
-  sacados de las curvas de nivel. Sin imágenes.
+  sacados de las curvas de nivel, **pintado una vez en un canvas** al abrir
+  (`js/madera.js`). Como filtro en vivo en el CSS hacía lento el scroll.
+- **Íconos PNG** 192/512 + maskable y `id` en el manifiesto: con solo SVG,
+  Android no la instalaba de verdad (acceso directo y "ya instalada").
 - **Papeles:** fotos achicadas a 2000 px; tope 15 MB. El archivo se guarda en
   el teléfono (sirve sin señal) y en Drive; el otro teléfono lo baja la
   primera vez que lo abre. El script solo entrega archivos de su carpeta.

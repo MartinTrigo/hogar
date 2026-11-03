@@ -114,7 +114,7 @@ function barrasH(cont, filas, opciones = {}) {
   const max = Math.max(...filas.map(f => Math.max(f.valor, f.tope || 0)), 1);
   cont.innerHTML = filas.length ? filas.map(f => {
     const pasado = f.tope && f.valor > f.tope;
-    return `<div class="barra-fila con-tip" data-tip="<b>${esc(f.nombre)}</b><br>${fmt(f.valor)}${f.tope ? ' de ' + fmt(f.tope) + ' previstos' : ''}">
+    return `<div class="barra-fila con-tip" data-tip="<b>${esc(f.nombre)}</b><br>${fmt(f.valor)}${f.tope ? (f.tipTope || ' de ' + fmt(f.tope) + ' previstos') : ''}">
       <div class="barra-rot"><span>${esc(f.nombre)}</span><span class="barra-val">${f.extra != null ? f.extra : fmt(f.valor)}</span></div>
       <div class="barra-pista">
         <div class="barra${pasado ? ' pasada' : ''}" style="width:${Math.max(f.valor / max * 100, f.valor ? 1.5 : 0)}%;background:var(--s${f.color || 0})"></div>

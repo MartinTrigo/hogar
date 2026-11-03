@@ -14,6 +14,7 @@ const TEMAS = [
 function ponerTema(id) {
   if (id) document.documentElement.dataset.tema = id; else delete document.documentElement.dataset.tema;
   try { localStorage.setItem('hogar_tema', id); } catch (e) {}
+  prepararMadera();
   const oscuro = getComputedStyle(document.documentElement).getPropertyValue('--cab').trim();
   document.querySelector('meta[name=theme-color]').setAttribute('content', oscuro || '#7A4E2A');
   pintarTemas();
@@ -37,8 +38,8 @@ function initAjustes() {
 
   $('#aj-a').addEventListener('change', e => { db.config.nombres.a = e.target.value.trim() || 'Persona 1'; guardarConfig(); repintar(); });
   $('#aj-b').addEventListener('change', e => { db.config.nombres.b = e.target.value.trim() || 'Persona 2'; guardarConfig(); repintar(); });
-  $('#aj-reparto').addEventListener('change', e => {
-    db.config.reparto = Math.max(0, Math.min(100, Number(e.target.value) || 50)); guardarConfig();
+  $('#aj-meta').addEventListener('change', e => {
+    db.config.metaAhorro = Math.max(0, Math.min(90, Number(e.target.value) || 0)); guardarConfig();
   });
   $('#aj-yo').addEventListener('change', e => { db.local.yo = e.target.value; formMov.quien = e.target.value; guardar('local'); pintarCargar(); });
 
@@ -91,8 +92,7 @@ function pintarAjustes() {
   pintarTemas();
   const { a, b } = db.config.nombres;
   $('#aj-a').value = a; $('#aj-b').value = b;
-  $('#aj-a-nom').textContent = a;
-  $('#aj-reparto').value = db.config.reparto ?? 50;
+  $('#aj-meta').value = db.config.metaAhorro || '';
   $('#aj-yo').innerHTML = `<option value="">—</option><option value="a">${esc(a)}</option><option value="b">${esc(b)}</option>`;
   $('#aj-yo').value = db.local.yo || '';
   $('#aj-url').value = db.local.url || '';

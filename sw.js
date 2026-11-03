@@ -4,9 +4,10 @@
    El sitio (martintrigo.github.io) es compartido con AMA y BioSalud:
    este service worker borra SOLO sus propios cachés (prefijo "hogar-").
    Al cambiar cualquier archivo, subir CACHE. */
-const CACHE = 'hogar-v2';
+const CACHE = 'hogar-v3';
 const ARCHIVOS = [
-  './', './index.html', './styles.css', './logo.svg', './manifest.json', './fuentes/figtree.woff2',
+  './', './index.html', './styles.css', './logo.svg', './manifest.json', './icono-192.png', './icono-512.png',
+  './icono-maskable-512.png', './apple-touch-icon.png', './js/madera.js', './fuentes/figtree.woff2',
   './js/util.js', './js/datos.js', './js/graficos.js', './js/cargar.js', './js/mes.js',
   './js/movimientos.js', './js/informes.js', './js/papeles.js', './js/sincro.js',
   './js/ajustes.js', './js/app.js'

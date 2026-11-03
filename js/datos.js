@@ -66,7 +66,7 @@ const TIPOS_PAPEL = [
 
 const CONFIG_INICIAL = {
   nombres: { a: 'Martín', b: 'Luna' },
-  reparto: 50,                     // % de los gastos del hogar que pone "a"
+  metaAhorro: 0,                   // % de lo que entra que quieren guardar (0 = sin meta)
   catsGasto: CATS_GASTO,
   catsIngreso: CATS_INGRESO,
   presupuesto: {},                 // { idCategoria: monto por mes }

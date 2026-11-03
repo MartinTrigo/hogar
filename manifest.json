@@ -1,13 +1,19 @@
 {
-  "name": "HOGAR · ingresos, gastos y papeles de la casa",
+  "id": "/hogar/",
+  "name": "HOGAR · gastos, ingresos y papeles de la casa",
   "short_name": "HOGAR",
-  "description": "En qué se va la plata de la casa: gastos e ingresos de cada uno, gráficos, informes y los papeles importantes a mano",
+  "description": "En qué se va la plata de la casa: gastos e ingresos, gráficos, informes y los papeles importantes a mano",
   "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#FAF6EF",
   "theme_color": "#7A4E2A",
   "orientation": "portrait",
+  "lang": "es-AR",
   "icons": [
+    { "src": "icono-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icono-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icono-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
     { "src": "logo.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
   ]
 }

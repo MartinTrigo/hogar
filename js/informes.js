@@ -1,7 +1,7 @@
 /* ============================================================
    Pestaña Informes: varios meses juntos, para ver la tendencia,
-   mirar una categoría de cerca (el auto, la comida), hacer las cuentas
-   entre los dos e imprimir o bajar todo.
+   mirar una categoría de cerca (el auto, la comida), seguir el ahorro
+   e imprimir o bajar todo.
    ============================================================ */
 
 function initInformes() {
@@ -65,7 +65,7 @@ function pintarInformes() {
   })), { vacio: `No hay gastos de ${c.nombre.toLowerCase()} en este período.` });
 
   pintarTabla(meses, gastos);
-  pintarCuentas(meses, gastos);
+  pintarAhorro(meses, enRango);
 }
 
 function pintarTabla(meses, gastos) {
@@ -85,42 +85,37 @@ function pintarTabla(meses, gastos) {
     </tbody></table>`;
 }
 
-/* Cuentas entre ustedes. Entran los gastos del hogar que pagó cada uno de
-   su bolsillo (no los de la cuenta común, que ya son de los dos, ni los
-   marcados personales). Si "a" tiene que poner el r % del total:
-     le toca a "a" = (lo que pagó a + lo que pagó b) × r
-     diferencia    = le toca a "a" − lo que pagó a
-   Positiva: "a" le debe a "b" esa plata. Negativa: al revés. */
-function pintarCuentas(meses, gastos) {
-  const { a, b } = db.config.nombres;
-  const r = (db.config.reparto ?? 50) / 100;
-  let acum = 0;
+/* Ahorro mes a mes: lo que entró, lo que salió y qué parte quedó.
+     ahorro % = (entró − salió) ÷ entró × 100
+   Con meta (Ajustes), cada mes dice si llegó. */
+function pintarAhorro(meses, enRango) {
+  const meta = db.config.metaAhorro || 0;
   const filas = meses.map(ym => {
-    const g = gastos.filter(m => mesDe(m.fecha) === ym && !m.personal);
-    const pa = suma(g.filter(m => m.quien === 'a')), pb = suma(g.filter(m => m.quien === 'b'));
-    const dif = (pa + pb) * r - pa;
-    acum += dif;
-    return { ym, pa, pb, dif };
-  }).filter(f => f.pa || f.pb);
-  if (!filas.length) { $('#i-cuentas').innerHTML = vacio('No hay gastos pagados por cada uno en este período.'); return; }
-  const quien = d => d > 0 ? `${esc(a)} → ${esc(b)}` : `${esc(b)} → ${esc(a)}`;
-  $('#i-cuentas').innerHTML = `
-    <p class="ritmo">Reparto acordado: ${esc(a)} ${Math.round(r * 100)}% · ${esc(b)} ${Math.round(100 - r * 100)}%.</p>
-    <table class="tabla"><thead><tr><th></th><th>pagó ${esc(a)}</th><th>pagó ${esc(b)}</th><th>para emparejar</th></tr></thead><tbody>
-    ${filas.map(f => `<tr><td>${nombreMes(f.ym, true)}</td><td>${fmt(f.pa)}</td><td>${fmt(f.pb)}</td>
-      <td>${Math.abs(f.dif) < 1 ? 'parejos' : quien(f.dif) + ' ' + fmt(Math.abs(f.dif))}</td></tr>`).join('')}
+    const ms = enRango.filter(m => mesDe(m.fecha) === ym);
+    const i = suma(ms.filter(m => m.tipo === 'ingreso')), g = suma(ms.filter(m => m.tipo === 'gasto'));
+    return { ym, i, g, q: i - g };
+  }).filter(f => f.i || f.g);
+  if (!filas.length) { $('#i-ahorro').innerHTML = vacio('No hay movimientos en este período.'); return; }
+  const tQ = filas.reduce((s, f) => s + f.q, 0), tI = filas.reduce((s, f) => s + f.i, 0);
+  $('#i-ahorro').innerHTML = `<table class="tabla"><thead><tr><th></th><th>entró</th><th>salió</th><th>quedó</th><th>ahorro</th></tr></thead><tbody>
+    ${filas.map(f => {
+      const p = f.i ? pct(f.q, f.i) : null;
+      return `<tr><td>${nombreMes(f.ym, true)}</td><td>${fmtCorto(f.i)}</td><td>${fmtCorto(f.g)}</td>
+        <td class="${f.q < 0 ? 'neg' : 'pos'}">${f.q < 0 ? '−' : ''}${fmtCorto(Math.abs(f.q))}</td>
+        <td>${p == null ? '—' : p + '%'}${meta && p != null ? (p >= meta ? ' ✓' : '') : ''}</td></tr>`;
+    }).join('')}
+    <tr class="total"><td>Total</td><td>${fmtCorto(tI)}</td><td>${fmtCorto(tI - tQ)}</td>
+      <td class="${tQ < 0 ? 'neg' : 'pos'}">${tQ < 0 ? '−' : ''}${fmtCorto(Math.abs(tQ))}</td><td>${tI ? pct(tQ, tI) + '%' : '—'}</td></tr>
     </tbody></table>
-    <p class="saldo-final">${Math.abs(acum) < 1 ? 'En todo el período quedaron parejos 👌'
-      : `En todo el período: <b>${quien(acum)} ${fmt(Math.abs(acum))}</b>`}</p>
-    <p class="hint">No entran los gastos de la cuenta común ni los marcados como personales.</p>`;
+    <p class="hint">${meta ? `Meta: guardar el ${meta}% de lo que entra (✓ = la cumplieron).` : 'Pueden poner una meta de ahorro en Ajustes.'}</p>`;
 }
 
 function bajarCSV() {
   const meses = mesesDelRango();
   const filas = movsVivos().filter(m => meses.includes(mesDe(m.fecha))).sort((a, b) => a.fecha.localeCompare(b.fecha));
-  const cab = ['fecha', 'tipo', 'categoria', 'detalle', 'monto', 'quien', 'medio', 'fijo', 'personal', 'nota'];
+  const cab = ['fecha', 'tipo', 'categoria', 'detalle', 'monto', 'quien', 'medio', 'fijo', 'nota'];
   // Punto y coma y coma decimal: así lo abre bien el Excel en castellano
   const csv = '﻿' + [cab.join(';'), ...filas.map(m => [m.fecha, m.tipo, cat(m.cat).nombre, m.detalle, String(m.monto).replace('.', ','),
-    nombreQuien(m.quien), nombreMedio(m.medio), m.fijo ? 'sí' : '', m.personal ? 'sí' : '', m.nota].map(csvCell).join(';'))].join('\n');
+    nombreQuien(m.quien), nombreMedio(m.medio), m.fijo ? 'sí' : '', m.nota].map(csvCell).join(';'))].join('\n');
   descargar(`hogar_${meses[0]}_a_${meses[meses.length - 1]}.csv`, csv, 'text/csv;charset=utf-8');
 }

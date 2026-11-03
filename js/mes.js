@@ -22,12 +22,13 @@ function pintarMes() {
   const tG = suma(gastos), tI = suma(ingresos), saldo = tI - tG;
 
   pintarAvisos(ym, gastos);
+  const meta = db.config.metaAhorro || 0;
 
   $('#mes-kpis').innerHTML = `
     <div class="kpi"><span>Entró</span><b class="pos">${fmt(tI)}</b></div>
     <div class="kpi"><span>Salió</span><b class="gasto">${fmt(tG)}</b></div>
     <div class="kpi"><span>Quedó</span><b class="${saldo < 0 ? 'neg' : 'pos'}">${saldo < 0 ? '−' : ''}${fmt(Math.abs(saldo))}</b></div>
-    <div class="kpi"><span>Ahorro</span><b>${tI ? pct(saldo, tI) + '%' : '—'}</b></div>`;
+    <div class="kpi"><span>Ahorro${meta ? ' (meta ' + meta + '%)' : ''}</span><b class="${!tI ? '' : meta && pct(saldo, tI) < meta ? 'neg' : meta ? 'pos' : ''}">${tI ? pct(saldo, tI) + '%' : '—'}${tI && meta ? (pct(saldo, tI) >= meta ? ' ✓' : '') : ''}</b></div>`;
 
   torta($('#mes-torta'), agrupar(gastos, 'cat').map(([id, v]) => {
     const c = cat(id);
@@ -37,19 +38,7 @@ function pintarMes() {
   pintarRitmo(ym, gastos, esActual);
   pintarCompara(ym, gastos, esActual);
 
-  // Quién puso qué
-  const hogar = gastos.filter(m => !m.personal);
-  const filasP = [
-    { nombre: 'Gastos que pagó ' + db.config.nombres.a, valor: suma(hogar.filter(m => m.quien === 'a')), color: 1 },
-    { nombre: 'Gastos que pagó ' + db.config.nombres.b, valor: suma(hogar.filter(m => m.quien === 'b')), color: 2 },
-    { nombre: 'Gastos de la cuenta común', valor: suma(hogar.filter(m => m.quien === 'comun')), color: 0 }
-  ];
-  const personales = gastos.filter(m => m.personal);
-  if (personales.length) filasP.push({ nombre: 'Gastos personales (no del hogar)', valor: suma(personales), color: 0 });
-  const ingA = suma(ingresos.filter(m => m.quien === 'a')), ingB = suma(ingresos.filter(m => m.quien === 'b'));
-  barrasH($('#mes-personas'), filasP.filter(f => f.valor > 0), { vacio: 'Sin gastos este mes.' });
-  if (tI) $('#mes-personas').insertAdjacentHTML('beforeend', `<p class="hint mt">Ingresos: ${esc(db.config.nombres.a)} ${fmt(ingA)} (${pct(ingA, tI)}%) · ${esc(db.config.nombres.b)} ${fmt(ingB)} (${pct(ingB, tI)}%)${tI - ingA - ingB > 0 ? ' · común ' + fmt(tI - ingA - ingB) : ''}</p>`);
-  $('#mes-personas').insertAdjacentHTML('beforeend', `<p class="hint">Quién le debe a quién: pestaña <a href="#" data-ir="informes">Informes</a>.</p>`);
+  pintarPromedio(ym, gastos);
 
   // Medios de pago
   const porMedio = agrupar(gastos, m => m.medio || 'sin');
@@ -170,4 +159,37 @@ function pintarCompara(ym, gastos, esActual) {
     ${filas.slice(0, 8).map(f => `<tr><td>${esc(cat(f.id).emoji)} ${esc(cat(f.id).nombre)}</td><td>${fmt(f.a)}</td><td>${fmt(f.b)}</td>
       <td class="${f.d > 0 ? 'neg' : 'pos'}">${f.d > 0 ? '▲ +' : f.d < 0 ? '▼ −' : ''}${fmt(Math.abs(f.d))}</td></tr>`).join('')}
     </tbody></table>`;
+}
+
+/* Este mes contra un mes normal: cada categoría con una rayita en lo que
+   gastan en promedio por mes (los 3 meses anteriores que tienen gastos).
+   Sirve de presupuesto sin tener que inventarlo: si la barra pasa la
+   rayita, este mes se fue más plata ahí que de costumbre. En el mes en
+   curso la barra se va llenando con los días. */
+function pintarPromedio(ym, gastos) {
+  const previos = [];
+  for (let k = 1; k <= 12 && previos.length < 3; k++) {
+    const m = sumarMeses(ym, -k);
+    if (movsDelMes(m, 'gasto').length) previos.push(m);
+  }
+  const cont = $('#mes-promedio');
+  if (!previos.length) { cont.innerHTML = vacio('Cuando tengan un mes completo cargado, acá se compara cada categoría con lo normal.'); return; }
+  const ant = movsVivos().filter(m => m.tipo === 'gasto' && previos.includes(mesDe(m.fecha)));
+  const ids = new Set([...gastos, ...ant].map(m => m.cat));
+  const filas = [...ids].map(id => {
+    const v = suma(gastos.filter(m => m.cat === id));
+    const prom = suma(ant.filter(m => m.cat === id)) / previos.length;
+    return { id, v, prom };
+  }).sort((a, b) => Math.max(b.v, b.prom) - Math.max(a.v, a.prom));
+  barrasH(cont, filas.map(f => ({
+    nombre: cat(f.id).emoji + ' ' + cat(f.id).nombre, valor: f.v, tope: f.prom, color: cat(f.id).color,
+    extra: `${fmt(f.v)} <small>/ ${fmt(f.prom)}</small>`, tipTope: '<br>un mes normal: ' + fmt(f.prom)
+  })));
+  const pasadas = filas.filter(f => f.prom && f.v > f.prom * 1.1);
+  const tProm = suma(ant) / previos.length;
+  cont.insertAdjacentHTML('afterbegin', `<p class="ritmo">Un mes normal gastan <b>${fmt(tProm)}</b>
+    <span class="hint">(promedio de ${previos.map(m => nombreMes(m, true)).join(', ')})</span>.</p>`);
+  cont.insertAdjacentHTML('beforeend', `<p class="hint">La rayita es el promedio. ${pasadas.length
+    ? 'Por arriba de lo normal: <b>' + pasadas.map(f => esc(cat(f.id).nombre)).join(', ') + '</b>. Ahí está lo primero para mirar si quieren ahorrar más.'
+    : 'Ninguna categoría está por arriba de lo normal 👌'}</p>`);
 }

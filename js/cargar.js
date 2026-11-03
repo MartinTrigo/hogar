@@ -32,9 +32,8 @@ function ponerTipo(tipo) {
   $$('.tipo-toggle button').forEach(b => b.classList.toggle('activo', b.dataset.tipo === tipo));
   $('#form-mov').classList.toggle('es-ingreso', tipo === 'ingreso');
   if (!cats(tipo).some(c => c.id === formMov.cat)) formMov.cat = '';
-  // El medio de pago y lo "personal" solo tienen sentido en los gastos
+  // El medio de pago solo tiene sentido en los gastos
   $('#campo-medio').classList.toggle('hidden', tipo === 'ingreso');
-  $('#check-personal').classList.toggle('hidden', tipo === 'ingreso');
   pintarCats();
 }
 
@@ -96,8 +95,7 @@ function guardarForm() {
     quien: formMov.quien,
     medio: formMov.tipo === 'gasto' ? formMov.medio : '',
     nota: f.nota.value.trim(),
-    fijo: f.fijo.checked,
-    personal: formMov.tipo === 'gasto' && f.personal.checked
+    fijo: f.fijo.checked
   });
   const eraEdicion = !!formMov.editando;
   guardarMov(m);
@@ -107,7 +105,7 @@ function guardarForm() {
   formMov.editando = null;
   formMov.cat = '';
   f.monto.value = ''; f.detalle.value = ''; f.nota.value = '';
-  f.fijo.checked = false; f.personal.checked = false;
+  f.fijo.checked = false;
   f.querySelector('.btn[type=submit]').textContent = 'Guardar';
   $('#cancelar-edicion')?.remove();
   $('#borrar-mov')?.remove();
@@ -126,7 +124,7 @@ function editarMov(id) {
   formMov.cat = m.cat; formMov.quien = m.quien || 'comun'; formMov.medio = m.medio || '';
   f.monto.value = Number(m.monto).toLocaleString('es-AR', { maximumFractionDigits: 2 });
   f.fecha.value = m.fecha; f.detalle.value = m.detalle || ''; f.nota.value = m.nota || '';
-  f.fijo.checked = !!m.fijo; f.personal.checked = !!m.personal;
+  f.fijo.checked = !!m.fijo;
   f.querySelector('.btn[type=submit]').textContent = 'Guardar corrección';
   if (!$('#cancelar-edicion')) {
     const b = document.createElement('button');
@@ -157,7 +155,7 @@ function editarMov(id) {
 function filaMov(m, conFecha = true) {
   const c = cat(m.cat);
   const sub = [conFecha ? fmtFecha(m.fecha) : '', nombreQuien(m.quien), nombreMedio(m.medio),
-    m.fijo ? '↻ fijo' : '', m.personal ? 'personal' : ''].filter(Boolean).join(' · ');
+    m.fijo ? '↻ fijo' : ''].filter(Boolean).join(' · ');
   return `<button class="mov" data-id="${m.id}">
     <span class="mov-ico" style="--c:var(--s${c.color || 0})">${esc(c.emoji)}</span>
     <span class="mov-txt"><b>${esc(c.nombre)}${m.detalle ? ' · ' + esc(m.detalle) : ''}</b>
