@@ -1,0 +1,3 @@
+# Archivos de prueba o respaldos que nunca deben subirse
+hogar_respaldo_*.json
+*.csv

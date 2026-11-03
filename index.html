@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#7A4E2A">
+<title>HOGAR</title>
+<script>
+  /* El tema elegido va antes de dibujar nada: si no, abrir en oscuro o en
+     madera mostraría un instante la pantalla clara. Sin elegir, manda el
+     teléfono (prefers-color-scheme en styles.css). */
+  try {
+    var tema = localStorage.getItem("hogar_tema") || "";
+    if (tema) document.documentElement.dataset.tema = tema;
+  } catch (e) {}
+</script>
+<link rel="preload" href="fuentes/figtree.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/svg+xml" href="logo.svg">
+<link rel="apple-touch-icon" href="logo.svg">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- Adornos: hojas dibujadas una vez y usadas en varios lugares con <use>.
+     Toman el color de --hoja y --hoja-osc, así cambian con el tema. -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="hoja" viewBox="0 0 40 60">
+      <path d="M20 58 C 4 44, 2 22, 20 2 C 38 22, 36 44, 20 58 Z" fill="var(--hoja)"/>
+      <path d="M20 58 L20 8 M20 22 L11 15 M20 30 L29 22 M20 38 L10 30 M20 46 L30 38" stroke="var(--hoja-osc)" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="rama" viewBox="0 0 160 120">
+      <path d="M156 4 C 120 18, 96 40, 78 66 C 66 84, 50 100, 28 112" stroke="var(--tallo)" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+      <use href="#hoja" x="118" y="6" width="22" height="33" transform="rotate(-50 129 22)"/>
+      <use href="#hoja" x="104" y="22" width="20" height="30" transform="rotate(48 114 37)"/>
+      <use href="#hoja" x="84" y="40" width="22" height="33" transform="rotate(-40 95 56)"/>
+      <use href="#hoja" x="70" y="62" width="19" height="28" transform="rotate(55 79 76)"/>
+      <use href="#hoja" x="48" y="78" width="20" height="30" transform="rotate(-30 58 93)"/>
+      <use href="#hoja" x="22" y="94" width="17" height="25" transform="rotate(70 30 106)"/>
+    </symbol>
+    <symbol id="brote" viewBox="0 0 60 50">
+      <path d="M30 50 L30 22" stroke="var(--tallo)" stroke-width="2.4" stroke-linecap="round"/>
+      <use href="#hoja" x="4" y="2" width="24" height="36" transform="rotate(-55 16 20)"/>
+      <use href="#hoja" x="32" y="0" width="24" height="36" transform="rotate(55 44 18)"/>
+    </symbol>
+  </defs>
+</svg>
+
+<header class="topbar">
+  <svg class="adorno adorno-cab" aria-hidden="true"><use href="#rama"/></svg>
+  <img src="logo.svg" alt="" class="logo">
+  <div class="brand">
+    <h1>HOGAR</h1>
+    <span class="subtitle" id="subtitulo">la casa de Martín y Luna</span>
+  </div>
+  <div class="topbar-actions">
+    <button id="btnTema" class="icon-btn" title="Cambiar tema" aria-label="Cambiar tema">◐</button>
+    <button id="btnSync" class="icon-btn" title="Sincronizar" aria-label="Sincronizar">↻</button>
+  </div>
+</header>
+
+<main id="main">
+
+  <!-- ============ CARGAR ============ -->
+  <section id="tab-cargar" class="tab">
+    <form id="form-mov" class="card form" autocomplete="off">
+      <div class="tipo-toggle" role="radiogroup" aria-label="Tipo">
+        <button type="button" data-tipo="gasto" class="activo">Gasto</button>
+        <button type="button" data-tipo="ingreso">Ingreso</button>
+      </div>
+      <label class="monto-grande">
+        <span>$</span>
+        <input type="text" name="monto" inputmode="decimal" placeholder="0" required aria-label="Monto">
+      </label>
+      <div class="cat-grid" id="cat-grid"></div>
+      <label>Detalle <span class="opc">(nafta, súper, luz…)</span>
+        <input type="text" name="detalle" list="sugerencias" maxlength="60">
+        <datalist id="sugerencias"></datalist>
+      </label>
+      <div class="campo">
+        <span class="campo-tit">¿Quién?</span>
+        <div class="chips" id="chips-quien"></div>
+      </div>
+      <div class="campo" id="campo-medio">
+        <span class="campo-tit">¿Cómo?</span>
+        <div class="chips" id="chips-medio"></div>
+      </div>
+      <div class="row">
+        <label>Fecha <input type="date" name="fecha" required></label>
+        <label>Nota <input type="text" name="nota" maxlength="120" placeholder="opcional"></label>
+      </div>
+      <div class="checks">
+        <label class="check"><input type="checkbox" name="fijo"> Se repite todos los meses</label>
+        <label class="check" id="check-personal"><input type="checkbox" name="personal"> Es personal, no del hogar</label>
+      </div>
+      <button type="submit" class="btn">Guardar</button>
+    </form>
+    <div class="card">
+      <h2>Últimos cargados</h2>
+      <div id="ultimos" class="lista"></div>
+    </div>
+  </section>
+
+  <!-- ============ MES ============ -->
+  <section id="tab-mes" class="tab hidden">
+    <div class="selector-mes">
+      <button class="icon-btn" data-mes="-1" aria-label="Mes anterior">‹</button>
+      <strong id="mes-nombre"></strong>
+      <button class="icon-btn" data-mes="1" aria-label="Mes siguiente">›</button>
+    </div>
+    <div id="mes-avisos"></div>
+    <div class="kpis" id="mes-kpis"></div>
+    <div class="card">
+      <h2>¿En qué se fue la plata?</h2>
+      <div id="mes-torta" class="torta-wrap"></div>
+    </div>
+    <div class="card" id="mes-ritmo-card">
+      <h2>Ritmo del mes</h2>
+      <div id="mes-ritmo"></div>
+    </div>
+    <div class="card">
+      <h2>Contra el mes anterior</h2>
+      <div id="mes-compara"></div>
+    </div>
+    <div class="card">
+      <h2>Quién puso qué</h2>
+      <div id="mes-personas"></div>
+    </div>
+    <div class="card">
+      <h2>Cómo se pagó</h2>
+      <div id="mes-medios"></div>
+    </div>
+    <div class="card">
+      <h2>Los gastos más grandes</h2>
+      <div id="mes-top" class="lista"></div>
+    </div>
+  </section>
+
+  <!-- ============ MOVIMIENTOS ============ -->
+  <section id="tab-movs" class="tab hidden">
+    <div class="card filtros">
+      <input type="search" id="f-texto" placeholder="Buscar: nafta, verdulería, Luna…">
+      <div class="row">
+        <select id="f-mes" aria-label="Mes"></select>
+        <select id="f-cat" aria-label="Categoría"></select>
+      </div>
+      <div class="row">
+        <select id="f-quien" aria-label="Quién"></select>
+        <select id="f-tipo" aria-label="Tipo">
+          <option value="">Gastos e ingresos</option>
+          <option value="gasto">Solo gastos</option>
+          <option value="ingreso">Solo ingresos</option>
+        </select>
+      </div>
+    </div>
+    <div id="movs-total" class="total-filtro"></div>
+    <div id="movs-lista"></div>
+  </section>
+
+  <!-- ============ INFORMES ============ -->
+  <section id="tab-informes" class="tab hidden">
+    <div class="card filtros no-imprimir">
+      <div class="row">
+        <select id="i-rango" aria-label="Período">
+          <option value="3">Últimos 3 meses</option>
+          <option value="6" selected>Últimos 6 meses</option>
+          <option value="12">Últimos 12 meses</option>
+          <option value="anio">Este año</option>
+        </select>
+        <select id="i-cat" aria-label="Categoría a mirar"></select>
+      </div>
+      <div class="row">
+        <button class="btn btn-sec" id="i-imprimir">Imprimir / PDF</button>
+        <button class="btn btn-sec" id="i-csv">Bajar planilla (CSV)</button>
+      </div>
+    </div>
+    <h2 class="solo-imprimir" id="i-titulo-imp"></h2>
+    <div class="kpis" id="i-kpis"></div>
+    <div class="card">
+      <h2>Ingresos y gastos por mes</h2>
+      <div id="i-barras"></div>
+    </div>
+    <div class="card">
+      <h2>Reparto del período</h2>
+      <div id="i-torta" class="torta-wrap"></div>
+    </div>
+    <div class="card">
+      <h2 id="i-cat-titulo">Una categoría de cerca</h2>
+      <div id="i-cat-barras"></div>
+      <div id="i-cat-detalle" class="torta-wrap"></div>
+    </div>
+    <div class="card">
+      <h2>Mes por mes, por categoría</h2>
+      <div id="i-tabla" class="tabla-scroll"></div>
+    </div>
+    <div class="card">
+      <h2>Cuentas entre ustedes</h2>
+      <div id="i-cuentas"></div>
+    </div>
+  </section>
+
+  <!-- ============ PAPELES ============ -->
+  <section id="tab-papeles" class="tab hidden">
+    <div class="card filtros">
+      <input type="search" id="p-texto" placeholder="Buscar: seguro, DNI, contrato…">
+      <button class="btn" id="p-nuevo">+ Guardar un papel</button>
+    </div>
+    <div id="p-vencen"></div>
+    <div id="p-lista"></div>
+  </section>
+
+  <!-- ============ AJUSTES ============ -->
+  <section id="tab-ajustes" class="tab hidden">
+    <div class="card">
+      <h2>Apariencia</h2>
+      <div class="temas" id="temas"></div>
+    </div>
+    <div class="card form" id="form-personas">
+      <h2>La casa</h2>
+      <div class="row">
+        <label>Nombre 1 <input type="text" id="aj-a" maxlength="20"></label>
+        <label>Nombre 2 <input type="text" id="aj-b" maxlength="20"></label>
+      </div>
+      <label>¿Quién usa este teléfono?
+        <select id="aj-yo"></select>
+      </label>
+      <label>Gastos del hogar: cuánto pone <span id="aj-a-nom"></span> (%)
+        <input type="number" id="aj-reparto" min="0" max="100" step="5" inputmode="numeric">
+      </label>
+      <p class="hint">Con 50 se reparten mitad y mitad. Si uno gana más, pueden poner 60/40: el informe calcula quién le tiene que pasar plata a quién.</p>
+    </div>
+    <div class="card">
+      <h2>Categorías y presupuesto</h2>
+      <p class="hint">El presupuesto es cuánto quieren gastar por mes en cada cosa. Si lo dejan vacío, no se controla.</p>
+      <div id="aj-cats"></div>
+      <button class="btn btn-sec" id="aj-cat-nueva">+ Categoría nueva</button>
+    </div>
+    <div class="card form">
+      <h2>Compartir entre los dos teléfonos</h2>
+      <p class="hint">Con una planilla de Google, lo que carga uno lo ve el otro. Los pasos están en <b>apps-script/LEEME.md</b>.</p>
+      <label>Dirección del Web App <input type="url" id="aj-url" placeholder="https://script.google.com/macros/s/…/exec"></label>
+      <label>Clave <input type="password" id="aj-clave" autocomplete="off"></label>
+      <div class="row">
+        <button class="btn" id="aj-sync-guardar">Conectar</button>
+        <button class="btn btn-sec" id="aj-sync-quitar">Desconectar</button>
+      </div>
+      <p class="hint" id="aj-sync-estado"></p>
+    </div>
+    <div class="card">
+      <h2>Respaldo</h2>
+      <p class="hint">Un archivo con todos los movimientos y papeles (sin los archivos adjuntos). Conviene bajarlo cada tanto.</p>
+      <div class="row">
+        <button class="btn btn-sec" id="aj-exportar">Bajar respaldo</button>
+        <label class="btn btn-sec btn-archivo">Recuperar respaldo<input type="file" id="aj-importar" accept=".json,application/json" hidden></label>
+      </div>
+    </div>
+    <p class="pie">HOGAR · <span id="version"></span>
+      <svg class="adorno adorno-pie" aria-hidden="true"><use href="#brote"/></svg>
+    </p>
+  </section>
+</main>
+
+<nav class="tabbar" id="tabbar">
+  <button data-tab="cargar" class="active"><span class="t-ico">＋</span>Cargar</button>
+  <button data-tab="mes"><span class="t-ico">◔</span>Mes</button>
+  <button data-tab="movs"><span class="t-ico">☰</span>Lista</button>
+  <button data-tab="informes"><span class="t-ico">▥</span>Informes</button>
+  <button data-tab="papeles"><span class="t-ico">🗂</span>Papeles</button>
+  <button data-tab="ajustes"><span class="t-ico">⚙</span>Ajustes</button>
+</nav>
+
+<!-- Modal genérico: editar un movimiento, cargar o ver un papel -->
+<div id="modal" class="modal hidden" role="dialog" aria-modal="true">
+  <div class="card modal-box" id="modal-box"></div>
+</div>
+
+<div id="tooltip" class="tooltip hidden" role="status"></div>
+<div id="toast" class="toast hidden" role="status"></div>
+
+<script src="js/util.js"></script>
+<script src="js/datos.js"></script>
+<script src="js/graficos.js"></script>
+<script src="js/cargar.js"></script>
+<script src="js/mes.js"></script>
+<script src="js/movimientos.js"></script>
+<script src="js/informes.js"></script>
+<script src="js/papeles.js"></script>
+<script src="js/sincro.js"></script>
+<script src="js/ajustes.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

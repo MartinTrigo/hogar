@@ -1,0 +1,13 @@
+{
+  "name": "HOGAR · ingresos, gastos y papeles de la casa",
+  "short_name": "HOGAR",
+  "description": "En qué se va la plata de la casa: gastos e ingresos de cada uno, gráficos, informes y los papeles importantes a mano",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#FAF6EF",
+  "theme_color": "#7A4E2A",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "logo.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
