@@ -2,7 +2,7 @@
    Arranque y navegación entre pestañas.
    ============================================================ */
 
-const VERSION_APP = '1.0 · 03/11/2026';
+const VERSION_APP = '1.1 · 03/11/2026';
 let pestana = 'cargar';
 
 function irA(tab) {
@@ -51,6 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   ponerTema(temaActual());
+  pedirMemoriaPersistente();
   irA('cargar');
   marcarEstadoSync();
   sincronizar(true);

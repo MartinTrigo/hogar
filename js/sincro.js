@@ -80,6 +80,7 @@ async function sincronizar(silencioso) {
     escribir(CLAVES.movs, db.movs); escribir(CLAVES.papeles, db.papeles); escribir(CLAVES.config, db.config);
     guardar('local');
     await subirArchivosPendientes();
+    bajarArchivosFaltantes();   // por detrás: no hace esperar a la sincronización
     if (!silencioso) toast('Sincronizado ✓');
     repintar();
   } catch (e) {
@@ -124,6 +125,24 @@ async function subirArchivosPendientes() {
     // El registro con su driveId sale en la próxima sincronización
     clearTimeout(timerSync);
     timerSync = setTimeout(() => sincronizar(true), 1500);
+  }
+}
+
+/* Cada teléfono tiene TODOS los papeles, no solo los que cargó: apenas
+   sincroniza, baja de Drive los que le faltan. Así el seguro del auto se
+   abre en la ruta sin señal aunque lo haya sacado la foto el otro. */
+let bajandoArchivos = false;
+async function bajarArchivosFaltantes() {
+  if (bajandoArchivos) return;
+  bajandoArchivos = true;
+  try {
+    const locales = await idsConArchivo();
+    for (const p of vivos(db.papeles).filter(p => p.mime && p.driveId && !locales.has(p.id))) {
+      try { await archivoGuardar(p.id, await bajarArchivo(p)); } catch (e) { break; }  // sin señal: sigue la próxima vez
+    }
+  } finally {
+    bajandoArchivos = false;
+    if (pestana === 'papeles') pintarPapeles();
   }
 }
 

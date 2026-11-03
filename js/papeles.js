@@ -63,6 +63,45 @@ const tipoPapel = id => TIPOS_PAPEL.find(t => t.id === id) || TIPOS_PAPEL[TIPOS_
 function initPapeles() {
   $('#p-texto').addEventListener('input', pintarPapeles);
   $('#p-nuevo').addEventListener('click', () => formPapel());
+  $('#p-descargas').addEventListener('click', copiasADescargas);
+}
+
+/* Le pide al teléfono que la memoria de la app sea "persistente": sin
+   esto, Android puede borrarla cuando le falta lugar, y con ella los
+   papeles guardados. Chrome lo concede solo a apps instaladas o muy usadas,
+   así que se vuelve a pedir en cada arranque. */
+async function pedirMemoriaPersistente() {
+  try {
+    if (navigator.storage && navigator.storage.persist && !(await navigator.storage.persisted())) {
+      await navigator.storage.persist();
+    }
+  } catch (e) {}
+}
+
+async function pintarEstadoGuardado(lista, locales) {
+  const conArchivo = lista.filter(p => p.mime);
+  $('#p-guardado').classList.toggle('hidden', !conArchivo.length);
+  if (!conArchivo.length) return;
+  const aca = conArchivo.filter(p => locales.has(p.id)).length;
+  let fija = false;
+  try { fija = navigator.storage && await navigator.storage.persisted(); } catch (e) {}
+  $('#p-estado').innerHTML = (aca === conArchivo.length
+    ? (aca === 1 ? '✓ El archivo está guardado' : `✓ Los ${aca} archivos están guardados`) + ' en este teléfono: se abren sin señal.'
+    : `${aca} de ${conArchivo.length} archivos en este teléfono. Los otros se bajan solos la próxima vez que haya señal.`) +
+    (fija ? '' : '<br>Para que el teléfono no los borre si se queda sin lugar, instalen la app ("Agregar a pantalla de inicio").');
+}
+
+async function copiasADescargas() {
+  const locales = await idsConArchivo();
+  const lista = vivos(db.papeles).filter(p => p.mime && locales.has(p.id));
+  if (!lista.length) { toast('No hay archivos guardados en este teléfono'); return; }
+  toast(`Guardando ${lista.length} archivos en Descargas…`);
+  for (const p of lista) {
+    const blob = await archivoLeer(p.id);
+    const ext = (p.nombreArchivo || '').match(/\.\w+$/) ? '' : (p.mime === 'application/pdf' ? '.pdf' : '.jpg');
+    descargar(`HOGAR - ${p.titulo}${ext}`.replace(/[\\/:*?"<>|]/g, '-'), blob);
+    await new Promise(r => setTimeout(r, 700));   // de a uno: varios juntos el navegador los frena
+  }
 }
 
 async function pintarPapeles() {
@@ -70,6 +109,7 @@ async function pintarPapeles() {
   const locales = await idsConArchivo();
   const lista = vivos(db.papeles).filter(p => !texto ||
     [p.titulo, p.nota, tipoPapel(p.tipo).nombre, p.nombreArchivo].join(' ').toLowerCase().includes(texto));
+  pintarEstadoGuardado(vivos(db.papeles), locales);
 
   const pronto = papelesPorVencer(45);
   $('#p-vencen').innerHTML = pronto.length && !texto ? `<div class="card"><h2>Vencimientos</h2>${pronto.map(p => {

@@ -152,8 +152,25 @@ function configurar() {
   hojaLlamada('papeles', COLUMNAS.papeles);
   hojaLlamada('ajustes', ['json', 'mod']);
   var c = carpeta();
+  /* La clave se inventa sola (cuatro palabras al azar, fácil de tipear en
+     el teléfono) y queda en las propiedades del script. Se muestra acá
+     para copiarla a los dos teléfonos; se puede volver a ver corriendo
+     `verClave`. */
+  var props = PropertiesService.getScriptProperties();
+  if (!props.getProperty('HOGAR_CLAVE')) props.setProperty('HOGAR_CLAVE', claveNueva());
   Logger.log('Listo. Carpeta de papeles: ' + c.getUrl());
-  if (!PropertiesService.getScriptProperties().getProperty('HOGAR_CLAVE')) {
-    Logger.log('Falta la clave: Configuración del proyecto → Propiedades del script → HOGAR_CLAVE');
-  }
+  verClave();
+}
+
+function verClave() {
+  Logger.log('Clave para los teléfonos:  ' + PropertiesService.getScriptProperties().getProperty('HOGAR_CLAVE'));
+}
+
+function claveNueva() {
+  var palabras = ['nogal', 'lenga', 'coihue', 'maiten', 'radal', 'ciprés', 'roble', 'notro', 'calafate', 'maqui',
+    'frutilla', 'zapallo', 'acelga', 'puerro', 'girasol', 'trigo', 'lupino', 'avena', 'haba', 'nabo',
+    'leña', 'fogón', 'mate', 'tetera', 'ventana', 'huerta', 'arroyo', 'cerro', 'nube', 'lluvia', 'helada', 'brote'];
+  var p = [];
+  for (var i = 0; i < 4; i++) p.push(palabras[Math.floor(Math.random() * palabras.length)]);
+  return p.join('-') + '-' + Math.floor(10 + Math.random() * 90);
 }
