@@ -5,7 +5,11 @@
 - [x] Publicada (03/11): repositorio `MartinTrigo/hogar` (público), GitHub
       Pages → https://martintrigo.github.io/hogar/ . Cada push publica.
 - [ ] Instalarla en los dos teléfonos ("Agregar a pantalla de inicio").
-- [ ] Conectar la planilla (`apps-script/LEEME.md`).
+- [x] Planilla `HOGAR` en el Drive de Martín y script publicado como Web App (03/11).
+      Probado: responde y rechaza claves equivocadas. La dirección y la clave
+      NO van acá (repo público): las tiene Martín.
+- [ ] Conectar los dos teléfonos (Ajustes → Compartir) y ver que en la
+      planilla aparezcan los movimientos.
 
 ## Ideas
 
